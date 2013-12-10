@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>MarkLogic Search Library</title>
+  <script src="../search/SearchResults.js"></script>
+  <script src="../search/SearchResult.js"></script>
+  <script src="../search/Match.js"></script>
+  <script src="../search/Facet.js"></script>
+  <script src="../search/FacetValue.js"></script>
+  <script src="../search/Metadata.js"></script>
+  <script src="../search/MetaItem.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+</head>
+<body>
+
+<input type="text" id="q" value"" />
+<input type="submit" id="submit" />
+
+<pre id="container"></pre>
+
+<script>
+var displayResults = function (results) {
+	var html = '';
+	html += '\n\nTotal: ' + results.getTotal();
+	html += '\nTotal time: ' + results.getMetrics()['total-time'] + '\n\n';
+	$.each(results.getResults(), function( index, value ) {
+  		html += index + ": " + value.getURI() + '\n';
+		$.each(value.getMatches(), function( index, value ) {
+			html += value.getMatchTextAsHTML() + '\n';
+		});
+	});
+	html += '\n';
+	$.each(results.getFacets(), function( index, value ) {
+  		html += index + ": " + value.getName() + '\n';
+  		$.each(value.getFacetValues(), function( index, value ) {
+  			html += '    ' + value.getValue() + ": " + value.getCount() + '\n';
+  		});
+	});
+	$.each(results.getFacetsGeo(), function( index, value ) {
+  		html += index + ": " + value.getCount() + '\n';
+  		$.each(value.getFacetBoxes(), function( index, value ) {
+  			html += '     Count: ' + value.getCount() + ' N: ' + value.getN() + " S: " + value.getS();
+  			html += " E: " + value.getE() + " W: " + value.getW() + " URI: " + value.getURI() + '\n';
+  		});
+	});
+	$('#container').append(html);
+}
+
+
+var url = "proxy.php?proxyPath=/v1/search&format=json&view=all&options=all&start=1&pageLength=20";
+$('#submit').click(function (ev) {
+	var q = $('#q').val();
+	url = url + '&q=' + q;
+	$.get(url, function (data) {
+		results = new ML.SearchResults(JSON.parse(data));
+		$('#container').html(JSON.stringify(results.getData()));
+		displayResults(results);
+	});
+});
+</script>
+
+</body>
+</html>
